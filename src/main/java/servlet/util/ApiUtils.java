@@ -3,6 +3,7 @@ package servlet.util;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import dto.ProductDTO;
+import exception.HttpBadRequestException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -33,7 +34,7 @@ public class ApiUtils {
         }
         String[] paths = request.getPathInfo().split("/");
         if (paths.length > 2) {
-            throw new ServletException("");
+            throw new HttpBadRequestException("");
         }
         return paths[1];
     }
