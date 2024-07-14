@@ -1,6 +1,9 @@
 package servlet;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import dto.ProductDTO;
+import exception.HttpMediaTypeException;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -10,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import service.impl.ProductServiceImpl;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import static servlet.util.ApiUtils.*;
 
@@ -18,6 +22,7 @@ import static servlet.util.ApiUtils.*;
         "/api/products/"
 })
 public class ProductServlet extends HttpServlet {
+    private final Gson gson = new GsonBuilder().serializeNulls().create();
     private ProductServiceImpl service;
 
     @Override
@@ -61,14 +66,15 @@ public class ProductServlet extends HttpServlet {
     }
 
     @Override
-    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         if (isCorrectContentTypeForPost(request)) {
-            response.sendError(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
-            return;
+            String errorMessage = "content type: %S not support for PUT method".formatted(request.getContentType());
+            HttpMediaTypeException e = new HttpMediaTypeException(errorMessage);
+            throw new ServletException(e);
         }
         ProductDTO productDTO = convertJsonToProductDTO(request);
         try {
-            service.updateByEntity(productDTO);
+            productDTO = service.updateByEntity(productDTO);
             sendJsonResponse(response, productDTO);
         } catch (Exception e) {
             throw new ServletException(e);
@@ -79,17 +85,26 @@ public class ProductServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-
-        Long id = Long.parseLong(request.getPathInfo().split("/")[1]);
         ProductDTO productDTO;
         try {
+            String path = splitPathInfo(request);
+
+            Long id = Long.parseLong(path);
+
             productDTO = service.deleteById(id);
+
             sendJsonResponse(response, productDTO);
         } catch (Exception e) {
             throw new ServletException(e);
         }
-
     }
 
+    private void sendJsonResponse(HttpServletResponse response, ProductDTO productDTO) throws IOException {
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/json");
+        PrintWriter writer = response.getWriter();
+        writer.print(gson.toJson(productDTO));
+        writer.flush();
+    }
 
 }
