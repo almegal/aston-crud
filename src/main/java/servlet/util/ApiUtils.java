@@ -11,9 +11,19 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
+/**
+ * Вспомогательный класс для работы с API, предоставляющий методы для обработки HTTP-запросов.
+ */
 public class ApiUtils {
 
-    static public ProductDTO convertJsonToProductDTO(HttpServletRequest request) throws ServletException {
+    /**
+     * Преобразует JSON-данные из запроса в объект ProductDTO.
+     *
+     * @param request HTTP-запрос, содержащий JSON-данные
+     * @return объект ProductDTO, созданный из JSON-данных
+     * @throws ServletException если происходит ошибка при чтении или парсинге JSON-данных
+     */
+    public static ProductDTO convertJsonToProductDTO(HttpServletRequest request) throws ServletException {
         try {
             Scanner scanner = new Scanner(request.getInputStream(), StandardCharsets.UTF_8);
             String jsonData = scanner.useDelimiter("\\A").next();
@@ -27,24 +37,35 @@ public class ApiUtils {
         }
     }
 
-
-    static public String splitPathInfo(HttpServletRequest request) throws ServletException {
+    /**
+     * Разделяет pathInfo запроса на части и возвращает идентификатор продукта.
+     *
+     * @param request HTTP-запрос
+     * @return строка, содержащая идентификатор продукта
+     * @throws HttpBadRequestException если pathInfo пуст или содержит более двух частей
+     */
+    public static String splitPathInfo(HttpServletRequest request) {
         if (request.getPathInfo() == null) {
-            throw new ServletException("");
+            throw new HttpBadRequestException("Path info is null");
         }
         String[] paths = request.getPathInfo().split("/");
         if (paths.length > 2) {
-            throw new HttpBadRequestException("");
+            throw new HttpBadRequestException("Invalid path info");
         }
         return paths[1];
     }
 
-    static public boolean isCorrectContentTypeForPost(HttpServletRequest req) {
+    /**
+     * Проверяет, является ли тип содержимого запроса корректным для POST-запроса.
+     *
+     * @param req HTTP-запрос
+     * @return true, если тип содержимого корректен, иначе false
+     */
+    public static boolean isCorrectContentTypeForPost(HttpServletRequest req) {
         final String JSON_CONTENT_TYPE = "application/json";
         if (req.getContentType() == null) {
             return true;
         }
         return !req.getContentType().equals(JSON_CONTENT_TYPE);
     }
-
 }
