@@ -1,6 +1,7 @@
 package servlet;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import exception.ElementNotFoundException;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletException;
@@ -26,42 +27,18 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 /**
- * Сервлет для обработки запросов к продуктам.
+ * Тестирование сервлета для обработки запросов к продуктам.
  * Обрабатывает запросы GET, POST, PUT и DELETE к конечной точке /api/products.
- * <p>
- * Сценарии тестирования для этого сервлета
- *
- * <h3>Тестирование метода doDelete:</h3>
- *
- * <b>Позитивные сценарии:</b>
- * <ul>
- *     <li>Запрос на удаление существующего продукта:
- *         <ul>
- *             <li>Отправить запрос DELETE /api/products/1</li>
- *             <li>Проверить, что статус ответа - 200 OK</li>
- *             <li>Проверить, что ответ содержит сообщение об успешном удалении</li>
- *         </ul>
- *     </li>
- * </ul>
- *
- * <b>Негативные сценарии:</b>
- * <ul>
- *     <li>Запрос на удаление несуществующего продукта:
- *         <ul>
- *             <li>Отправить запрос DELETE /api/products/999</li>
- *             <li>Проверить, что статус ответа - 404 Not Found</li>
- *             <li>Проверить, что ответ содержит сообщение об ошибке "Product not found"</li>
- *         </ul>
- *     </li>
- * </ul>
  */
 @ExtendWith(MockitoExtension.class)
 public class ProductServletUnitTest {
+    private StringWriter STRING_WRITER;
+    private PrintWriter PRINT_WRITER;
+
     /**
      * Mock объекты для HttpServletRequest, HttpServletResponse и ProductServiceImpl,
      * которые будут использоваться в тестах.
      */
-
     @Mock
     private HttpServletRequest mockHttpRequest;
     @Mock
@@ -72,165 +49,264 @@ public class ProductServletUnitTest {
     private ProductServlet servlet;
 
     /**
-     * Подготовка StringWriter и PrintWriter для записи вывода HttpServletResponse.
+     * Инициализация перед каждым тестом.
+     * Настраивает объекты StringWriter и PrintWriter.
      */
-
-    private StringWriter stringWriter;
-    private PrintWriter printWriter;
-
     @BeforeEach
-    public void init() throws IOException {
-        stringWriter = new StringWriter();
-        printWriter = new PrintWriter(stringWriter);
+    public void init() {
+        STRING_WRITER = new StringWriter();
+        PRINT_WRITER = new PrintWriter(STRING_WRITER);
     }
 
+    /**
+     * Настраивает мок HttpServletRequest для возврата пути запроса.
+     *
+     * @param path путь запроса
+     */
+    private void setupMockRequestPath(String path) {
+        when(mockHttpRequest.getPathInfo()).thenReturn(path);
+    }
 
     /**
-     * Позитивный тест для метода `doGet`, проверяет успешное получение продукта по ID.
+     * Настраивает мок HttpServletRequest для возврата входного потока с данными JSON.
+     *
+     * @param jsonData данные JSON для запроса
+     * @throws IOException если возникает ошибка ввода/вывода
+     */
+    private void setupMockRequestInputStream(String jsonData) throws IOException {
+        InputStream inputStream = new ByteArrayInputStream(jsonData.getBytes());
+        ServletInputStream servletInputStream = new MockServletInputStream(inputStream);
+        when(mockHttpRequest.getInputStream()).thenReturn(servletInputStream);
+        when(mockHttpRequest.getContentType()).thenReturn("application/json");
+    }
+
+    /**
+     * Проверяет корректность ответа сервлета.
+     *
+     * @param expected ожидаемый JSON результат
+     */
+    private void verifyResponse(String expected) {
+        String actual = STRING_WRITER.toString();
+        STRING_WRITER.flush();
+        assertEquals(expected, actual);
+        verify(mockHttpResponse).setStatus(HttpServletResponse.SC_OK);
+        verify(mockHttpResponse).setContentType("application/json");
+    }
+
+    /**
+     * Позитивный тест для метода doGet, проверяет успешное получение продукта по ID.
      * Проверяет корректность ответа с данными продукта в формате JSON.
      */
-
     @Test
     @DisplayName("Запрос на получение существующего продукта")
     public void doGetWhenProductExist() throws ServletException, IOException {
+        // Настройка поведения мока: вернуть продукт при запросе по ID
         when(service.getById(anyLong())).thenReturn(PRODUCT_DTO_TO_SAVE);
-        when(mockHttpResponse.getWriter()).thenReturn(printWriter);
-        when(mockHttpRequest.getPathInfo()).thenReturn("/1");
+        // Настройка мока HttpServletResponse для возврата PrintWriter
+        when(mockHttpResponse.getWriter()).thenReturn(PRINT_WRITER);
+        // Настройка мока HttpServletRequest для возврата пути запроса
+        setupMockRequestPath("/1");
 
+        // Вызов тестируемого метода
         servlet.doGet(mockHttpRequest, mockHttpResponse);
 
+        // Получение ожидаемого результата в формате JSON
         String expected = new Gson().toJson(PRODUCT_DTO_TO_SAVE);
         // Проверка результатов
-        stringWriter.flush();
-        assertAll(
-                () -> verify(mockHttpResponse, times(1)).setStatus(HttpServletResponse.SC_OK),
-                () -> verify(mockHttpResponse, times(1)).setContentType("application/json")
-        );
-
-        assertEquals(expected, stringWriter.toString());
-
+        verifyResponse(expected);
     }
 
     /**
-     * Негативный тест для метода `doGet`, проверяет поведение при запросе несуществующего продукта.
-     * Ожидает исключение `ElementNotFoundException` с сообщением "Product not found".
+     * Негативный тест для метода doGet, проверяет поведение при запросе несуществующего продукта.
+     * Ожидает исключение ElementNotFoundException с сообщением "Product not found".
      */
-
     @Test
     @DisplayName("Запрос на получение несуществующего продукта")
     public void doGetWhenProductNotExist() {
+        // Настройка поведения мока: выбросить исключение при запросе продукта по ID
         when(service.getById(1L)).thenThrow(new ElementNotFoundException(ERROR_MESSAGE_NOT_FOUND.formatted(1L)));
-        when(mockHttpRequest.getPathInfo()).thenReturn("/1");
+        // Настройка мока HttpServletRequest для возврата пути запроса
+        setupMockRequestPath("/1");
+
+        // Вызов тестируемого метода и проверка выброса исключения
         ServletException thrown = assertThrows(ServletException.class,
                 () -> servlet.doGet(mockHttpRequest, mockHttpResponse));
+
         // Проверка результатов
         assertAll(
                 () -> verify(mockHttpResponse, never()).setStatus(HttpServletResponse.SC_OK),
                 () -> verify(mockHttpResponse, never()).setContentType("application/json")
         );
+
+        // Проверка типа и сообщения исключения
         assertTrue(thrown.getCause() instanceof ElementNotFoundException);
-        assertEquals(ERROR_MESSAGE_NOT_FOUND.formatted(1L), thrown.getCause().getMessage().formatted(1L));
+        assertEquals(ERROR_MESSAGE_NOT_FOUND.formatted(1L), thrown.getCause().getMessage());
     }
 
     /**
-     * Негативный тест для метода `doGet`, проверяет обработку запроса с некорректным ID продукта.
+     * Негативный тест для метода doGet, проверяет обработку запроса с некорректным ID продукта.
      * Ожидается ServletException без изменения HTTP статуса и контента.
+     *
+     * @param path некорректный путь для ID продукта
      */
-
     @ParameterizedTest
     @ValueSource(strings = {"", "/abc", "/null", "/one", "/"})
     @DisplayName("Запрос с некорректным ID продукта")
     public void doGetWithIncorrectIdParams(String path) {
-        when(mockHttpRequest.getPathInfo()).thenReturn(path);
+        // Настройка мока HttpServletRequest для возврата некорректного пути запроса
+        setupMockRequestPath(path);
+
+        // Вызов тестируемого метода и проверка выброса исключения
         assertThrows(ServletException.class,
                 () -> servlet.doGet(mockHttpRequest, mockHttpResponse));
 
+        // Проверка, что статус и тип контента не изменились
         verify(mockHttpResponse, never()).setStatus(HttpServletResponse.SC_OK);
         verify(mockHttpResponse, never()).setContentType("application/json");
     }
 
     /**
-     * Позитивный тест для метода `doPost`, проверяет успешное создание нового продукта с корректным JSON.
+     * Позитивный тест для метода doPost, проверяет успешное создание нового продукта с корректным JSON.
      * Проверяет корректность ответа с данными созданного продукта в формате JSON.
      */
-
     @Test
     @DisplayName("Запрос на создание нового продукта")
     public void doPostWithCorrectJson() throws IOException, ServletException {
-        InputStream inputStream = new ByteArrayInputStream(PRODUCT_AS_STRING.getBytes());
-        ServletInputStream servletInputStream = new MockServletInputStream(inputStream);
-
-        when(mockHttpResponse.getWriter()).thenReturn(printWriter);
-        when(mockHttpRequest.getInputStream()).thenReturn(servletInputStream);
-        when(mockHttpRequest.getContentType()).thenReturn("application/json");
-
+        // Настройка входного потока с корректными данными JSON для обновления
+        setupMockRequestInputStream(PRODUCT_AS_STRING);
+        // Настройка моков HttpServletResponse
+        when(mockHttpResponse.getWriter()).thenReturn(PRINT_WRITER);
+        // Вызов тестируемого метода
         servlet.doPost(mockHttpRequest, mockHttpResponse);
-
+        // Получение ожидаемого результата в формате JSON
         String expected = new Gson().toJson(PRODUCT_DTO_TO_SAVE);
-
-        stringWriter.flush();
-
-
-        verify(mockHttpResponse).setStatus(HttpServletResponse.SC_OK);
-        verify(mockHttpResponse, times(1)).setContentType("application/json");
-        assertEquals(expected, stringWriter.toString());
+        // Проверка результатов
+        verifyResponse(expected);
     }
 
     /**
-     * Негативниый тест для метода `doPost`, проверяет что выбрасывается исключение при создание нового продукта с некорректным JSON.
-     * Проверяет что возращается SQLException.
+     * Негативный тест для метода doPost, проверяет что выбрасывается исключение при создании нового продукта с некорректным JSON.
+     * Проверяет, что возвращается ServletException с типом JsonSyntaxException.
      */
     @Test
-    @DisplayName("Запрос на создание нового продукта c некорректным json")
-    public void doPostWhenJsonDataIncorrect() {
+    @DisplayName("Запрос на создание нового продукта с некорректным JSON")
+    public void doPostWhenJsonDataIncorrect() throws IOException {
+        // Настройка моков HttpServletRequest
+        setupMockRequestInputStream("invalid json");
 
+        // Вызов тестируемого метода и проверка выброса исключения
+        ServletException thrown = assertThrows(ServletException.class,
+                () -> servlet.doPost(mockHttpRequest, mockHttpResponse));
+
+        // Проверка типа исключения
+        assertTrue(thrown.getCause() instanceof JsonSyntaxException);
     }
 
     /**
-     * <h3>Тестирование метода doPut:</h3>
-     *
-     * <b>Позитивные сценарии:</b>
-     * <ul>
-     *     <li>Запрос на обновление существующего продукта:
-     *         <ul>
-     *             <li>Отправить запрос PUT /api/products/1 с корректным JSON телом запроса</li>
-     *             <li>Проверить, что статус ответа - 200 OK</li>
-     *             <li>Проверить, что ответ содержит корректный JSON с данными обновленного продукта</li>
-     *         </ul>
-     *     </li>
-     * </ul>
+     * Позитивный тест для метода doPut, проверяет обновление существующего продукта.
      */
     @Test
     @DisplayName("Запрос на обновление существующего продукта")
-    public void doPutWhenProductIsExist() {
+    public void doPutWhenProductIsExist() throws IOException, ServletException {
 
+        // Настройка моков HttpServletRequest
+        when(mockHttpResponse.getWriter()).thenReturn(PRINT_WRITER);
+        setupMockRequestInputStream(PRODUCT_AS_STRING);
+
+        // Настройка поведения мока: вернуть обновленный продукт при запросе по ID
+        when(service.updateByEntity(PRODUCT_DTO_TO_SAVE)).thenReturn(PRODUCT_DTO_TO_SAVE);
+
+        // Вызов тестируемого метода
+        servlet.doPut(mockHttpRequest, mockHttpResponse);
+
+        // Получение ожидаемого результата в формате JSON
+        String expected = new Gson().toJson(PRODUCT_DTO_TO_SAVE);
+        // Проверка результатов
+        verifyResponse(expected);
     }
-    /** <b>Негативные сценарии:</b>
-     * <ul>
-     *     <li>Запрос на обновление несуществующего продукта:
-     *         <ul>
-     *             <li>Отправить запрос PUT /api/products/999 с корректным JSON телом запроса</li>
-     *             <li>Проверить, что статус ответа - 404 Not Found</li>
-     *             <li>Проверить, что ответ содержит сообщение об ошибке "Product not found"</li>
-     *         </ul>
-     *     </li>
-     *     <li>Запрос с некорректным JSON телом запроса:
-     *         <ul>
-     *             <li>Отправить запрос PUT /api/products/1 с некорректным JSON телом</li>
-     *             <li>Проверить, что статус ответа - 400 Bad Request</li>
-     *         </ul>
-     *     </li>
-     * </ul>
-     *
-     * */
 
+    /**
+     * Негативный тест для метода doPut, проверяет обновление несуществующего продукта.
+     * Выбрасывает исключение ServletException с типом ElementNotFoundException.
+     */
+    @Test
+    @DisplayName("Запрос на обновление, если продукта не существует")
+    public void doPutWhenProductIsNotExist() throws IOException {
+        // Настройка поведения мока: выбросить исключение при запросе продукта по ID
+        when(service.updateByEntity(PRODUCT_DTO_TO_SAVE))
+                .thenThrow(new ElementNotFoundException(ERROR_MESSAGE_NOT_FOUND.formatted(MOCK_PRODUCT.getId())));
+
+        // Настройка моков HttpServletRequest
+        setupMockRequestInputStream(PRODUCT_AS_STRING);
+
+        // Вызов тестируемого метода и проверка выброса исключения
+        ServletException thrown = assertThrows(ServletException.class,
+                () -> servlet.doPut(mockHttpRequest, mockHttpResponse));
+
+        // Проверка результатов
+        assertAll(
+                () -> verify(mockHttpResponse, never()).setStatus(HttpServletResponse.SC_OK),
+                () -> verify(mockHttpResponse, never()).setContentType("application/json")
+        );
+
+        // Проверка типа и сообщения исключения
+        assertTrue(thrown.getCause() instanceof ElementNotFoundException);
+        assertEquals(ERROR_MESSAGE_NOT_FOUND.formatted(MOCK_PRODUCT.getId()), thrown.getCause().getMessage());
+    }
+
+    /**
+     * Позитивный тест для метода doDelete, проверяет успешное удаление продукта по ID.
+     * Проверяет корректность ответа с данными удаленного продукта в формате JSON.
+     * Проверяет, что статус ответа - 200 OK.
+     */
+    @Test
+    @DisplayName("Запрос на удаление существующего продукта")
+    public void doDeleteWhenProductExist() throws IOException, ServletException {
+        // Настройка моков
+        setupMockRequestPath("/1");
+        when(mockHttpResponse.getWriter()).thenReturn(PRINT_WRITER);
+        when(service.deleteById(1L)).thenReturn(PRODUCT_DTO_TO_SAVE);
+
+        // Вызов тестируемого метода
+        servlet.doDelete(mockHttpRequest, mockHttpResponse);
+
+        // Получение ожидаемого результата в формате JSON
+        String expected = new Gson().toJson(PRODUCT_DTO_TO_SAVE);
+        // Проверка результатов
+        verifyResponse(expected);
+    }
+
+    /**
+     * Негативный тест для метода doDelete, проверяет выброс исключения при удалении несуществующего продукта.
+     * Проверяет выброс исключения ServletException с типом ElementNotFoundException.
+     */
+    @Test
+    @DisplayName("Запрос на удаление продукта, который не существует")
+    public void doDeleteWhenProductIsNotExist() {
+        // Настройка моков
+        setupMockRequestPath("/1");
+        when(service.deleteById(1L))
+                .thenThrow(new ElementNotFoundException(ERROR_MESSAGE_NOT_FOUND.formatted(1L)));
+
+        // Вызов тестируемого метода и проверка выброса исключения
+        ServletException thrown = assertThrows(ServletException.class,
+                () -> servlet.doDelete(mockHttpRequest, mockHttpResponse));
+
+        // Проверка результатов
+        assertAll(
+                () -> verify(mockHttpResponse, never()).setStatus(HttpServletResponse.SC_OK),
+                () -> verify(mockHttpResponse, never()).setContentType("application/json")
+        );
+
+        // Проверка типа и сообщения исключения
+        assertTrue(thrown.getCause() instanceof ElementNotFoundException);
+        assertEquals(ERROR_MESSAGE_NOT_FOUND.formatted(1L), thrown.getCause().getMessage());
+    }
 
     /**
      * Мок класс для имитации ServletInputStream, используемый в тестах для передачи данных запроса.
      */
-
     private static class MockServletInputStream extends ServletInputStream {
-
         private final InputStream inputStream;
 
         public MockServletInputStream(InputStream inputStream) {
@@ -242,7 +318,7 @@ public class ProductServletUnitTest {
             try {
                 return inputStream.available() == 0;
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
             return false;
         }
