@@ -1,52 +1,71 @@
 package servlet.util;
 
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import dto.ProductDTO;
+import exception.HttpBadRequestException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
+/**
+ * Вспомогательный класс для работы с API, предоставляющий методы для обработки HTTP-запросов.
+ */
 public class ApiUtils {
-    static private final Gson gson = new GsonBuilder().serializeNulls().create();
 
-    static public ProductDTO convertJsonToProductDTO(HttpServletRequest request) throws IOException {
-        Scanner scanner = new Scanner(request.getInputStream(), StandardCharsets.UTF_8);
-        String jsonData = scanner.useDelimiter("\\A").next();
-        scanner.close();
-        return gson.fromJson(jsonData, ProductDTO.class);
+    /**
+     * Преобразует JSON-данные из запроса в объект ProductDTO.
+     *
+     * @param request HTTP-запрос, содержащий JSON-данные
+     * @return объект ProductDTO, созданный из JSON-данных
+     * @throws ServletException если происходит ошибка при чтении или парсинге JSON-данных
+     */
+    public static ProductDTO convertJsonToProductDTO(HttpServletRequest request) throws ServletException {
+        try {
+            Scanner scanner = new Scanner(request.getInputStream(), StandardCharsets.UTF_8);
+            String jsonData = scanner.useDelimiter("\\A").next();
+            scanner.close();
+            return new GsonBuilder()
+                    .serializeNulls()
+                    .create()
+                    .fromJson(jsonData, ProductDTO.class);
+        } catch (JsonSyntaxException | IOException e) {
+            throw new ServletException(e);
+        }
     }
 
-    static public void sendJsonResponse(HttpServletResponse response, ProductDTO productDTO) throws IOException {
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.setContentType("application/json");
-        PrintWriter writer = response.getWriter();
-        writer.print(gson.toJson(productDTO));
-        writer.flush();
-    }
-
-    static public String splitPathInfo(HttpServletRequest request) throws ServletException {
+    /**
+     * Разделяет pathInfo запроса на части и возвращает идентификатор продукта.
+     *
+     * @param request HTTP-запрос
+     * @return строка, содержащая идентификатор продукта
+     * @throws HttpBadRequestException если pathInfo пуст или содержит более двух частей
+     */
+    public static String splitPathInfo(HttpServletRequest request) {
         if (request.getPathInfo() == null) {
-            throw new ServletException("");
+            throw new HttpBadRequestException("Path info is null");
         }
         String[] paths = request.getPathInfo().split("/");
         if (paths.length > 2) {
-            throw new ServletException("");
+            throw new HttpBadRequestException("Invalid path info");
         }
         return paths[1];
     }
 
-    static public boolean isCorrectContentTypeForPost(HttpServletRequest req) {
+    /**
+     * Проверяет, является ли тип содержимого запроса корректным для POST-запроса.
+     *
+     * @param req HTTP-запрос
+     * @return true, если тип содержимого корректен, иначе false
+     */
+    public static boolean isCorrectContentTypeForPost(HttpServletRequest req) {
         final String JSON_CONTENT_TYPE = "application/json";
         if (req.getContentType() == null) {
             return true;
         }
         return !req.getContentType().equals(JSON_CONTENT_TYPE);
     }
-
 }

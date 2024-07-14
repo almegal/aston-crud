@@ -1,11 +1,15 @@
 package filter;
 
+import com.google.gson.JsonSyntaxException;
 import exception.ElementNotFoundException;
+import exception.HttpBadRequestException;
+import exception.HttpMediaTypeException;
 import exception.ServiceException;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.BadRequestException;
 
 import java.io.IOException;
 
@@ -38,9 +42,18 @@ public class ErrorFilter implements Filter {
             if (cause instanceof ElementNotFoundException) {
                 // Обработка исключения ElementNotFoundException
                 handleError(httpResponse, HttpServletResponse.SC_NOT_FOUND, cause.getMessage());
+
             } else if (cause instanceof ServiceException) {
                 // Обработка исключения ServiceException
                 handleError(httpResponse, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, cause.getMessage());
+
+            } else if (cause instanceof JsonSyntaxException
+                    || cause instanceof IOException
+                    || cause instanceof HttpBadRequestException) {
+                handleError(httpResponse, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage());
+            } else if (cause instanceof HttpMediaTypeException) {
+
+                handleError(httpResponse, HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, cause.getMessage());
             } else {
                 // Обработка всех остальных исключений
                 handleError(httpResponse, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, cause.getMessage());

@@ -83,8 +83,9 @@ public class ProductServiceImpl implements ProductService<ProductDTO> {
      */
     @Override
     public ProductDTO updateByEntity(ProductDTO newEntity) {
-        Product newProduct = mapper.toEntity(newEntity);
+
         try {
+            Product newProduct = mapper.toEntity(newEntity);
             getById(newEntity.getId());
             Product updatedProduct = repositoryImp.updateByEntity(newProduct);
             // возращает дто
