@@ -1,4 +1,4 @@
-# CRUD Application или средневоковый программист
+# CRUD Application или средневеко́вье программиста
 
 
 
@@ -82,11 +82,32 @@ DELETE /api/products/{id}
 
 ![crudRecipe.gif](crudRecipe.gif)
 
+## Структура БД
+```postgres-sql
+-- Таблица продуктов
+CREATE TABLE product (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL unique ,
+    description VARCHAR(255),
+    price INTEGER
+);
+
+-- Таблица рецептов
+CREATE TABLE recipe (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL unique ,
+    description VARCHAR(255)
+);
+
+-- Таблица, связывающая рецепты с продуктами (многие ко многим)
+CREATE TABLE recipe_product (
+    recipe_id INTEGER REFERENCES recipe(id) ON DELETE CASCADE,
+    product_id INTEGER REFERENCES product(id)  ON DELETE CASCADE,,
+    PRIMARY KEY (recipe_id, product_id)
+);
+```
 
 ## Тестирование
 
 - Покрытие слоя сервиса юнит тестами на 80% с использованием JUnit, Mockito и Parameterized Tests.
-
-## Лицензия
-
-Опционально, укажите информацию о лицензии вашего проекта.
+![reports.png](reports.png)
