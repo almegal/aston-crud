@@ -83,7 +83,7 @@ DELETE /api/products/{id}
 ![crudRecipe.gif](crudRecipe.gif)
 
 ## Структура БД
-```postgres-sql
+```sql
 -- Таблица продуктов
 CREATE TABLE product (
     id SERIAL PRIMARY KEY,
