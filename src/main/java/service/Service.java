@@ -8,7 +8,7 @@ import exception.ServiceException;
  *
  * @param <T> тип сущности
  */
-public interface ProductService<T, C> {
+public interface Service<T, C> {
 
     /**
      * Возвращает сущность по её идентификатору.

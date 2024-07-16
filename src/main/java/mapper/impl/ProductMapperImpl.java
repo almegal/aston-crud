@@ -28,18 +28,13 @@ public class ProductMapperImpl implements Mapper<ProductDto, ProductCreateDto, P
     public Product fromResultSetToEntity(ResultSet resultSet) {
         try {
             Product product = new Product();
-            if (resultSet.next()) {
-                product.setName(resultSet.getString("name"));
-                product.setId(resultSet.getInt("id"));
-                product.setPrice(resultSet.getInt("price"));
-                product.setDescription(resultSet.getString("description"));
-                return product;
-            } else {
-                return null;
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException(""); // Для логирования и отладки
+            product.setName(resultSet.getString("name"));
+            product.setId(resultSet.getInt("id"));
+            product.setPrice(resultSet.getInt("price"));
+            product.setDescription(resultSet.getString("description"));
+            return product;
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex.getMessage());
         }
     }
 
