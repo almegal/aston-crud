@@ -8,7 +8,7 @@ import exception.ServiceException;
  *
  * @param <T> тип сущности
  */
-public interface ProductService<T> {
+public interface ProductService<T, C> {
 
     /**
      * Возвращает сущность по её идентификатору.
@@ -16,7 +16,7 @@ public interface ProductService<T> {
      * @param id идентификатор сущности
      * @return сущность, если она существует
      * @throws ElementNotFoundException если сущность не найдена
-     * @throws ServiceException если произошла ошибка в сервисе
+     * @throws ServiceException         если произошла ошибка в сервисе
      */
     T getById(Long id);
 
@@ -27,7 +27,7 @@ public interface ProductService<T> {
      * @return сохраненная сущность
      * @throws ServiceException если произошла ошибка в сервисе
      */
-    T save(T entity);
+    T save(C dto);
 
     /**
      * Обновляет существующую сущность.
@@ -35,7 +35,7 @@ public interface ProductService<T> {
      * @param newEntity новая сущность для обновления
      * @return обновленная сущность
      * @throws ElementNotFoundException если сущность не найдена
-     * @throws ServiceException если произошла ошибка в сервисе
+     * @throws ServiceException         если произошла ошибка в сервисе
      */
     T updateByEntity(T newEntity);
 
@@ -45,7 +45,7 @@ public interface ProductService<T> {
      * @param id идентификатор сущности
      * @return удаленная сущность
      * @throws ElementNotFoundException если сущность не найдена
-     * @throws ServiceException если произошла ошибка в сервисе
+     * @throws ServiceException         если произошла ошибка в сервисе
      */
     T deleteById(Long id);
 }
