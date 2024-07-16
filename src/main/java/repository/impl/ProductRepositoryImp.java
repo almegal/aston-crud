@@ -39,9 +39,10 @@ public class ProductRepositoryImp implements CrudRepository<Product> {
     @Override
     public Optional<Product> getById(Long id) throws RepositoryException {
         try (Connection conn = db.createConnection();
-             Statement stm = conn.createStatement();
-             ResultSet resultSet = stm.executeQuery("SELECT * from product where id=%d".formatted(id))) {
-            Product product = mapper.toEntity(resultSet);
+             PreparedStatement stm = conn.prepareStatement("SELECT * from product where id=?")) {
+            stm.setLong(1, id);
+            ResultSet resultSet = stm.executeQuery();
+            Product product = mapper.fromResultSetToEntity(resultSet);
             return Optional.ofNullable(product);
         } catch (SQLException ex) {
             throw new RepositoryException(ERROR_MESSAGE_DATA_BASE, ex);
@@ -58,18 +59,24 @@ public class ProductRepositoryImp implements CrudRepository<Product> {
     @Override
     public Product save(Product newProduct) throws RepositoryException {
         try (Connection conn = db.createConnection();
-             PreparedStatement stm = conn.prepareStatement("INSERT INTO product (name, price, description) VALUES (?, ?, ?)")) {
+             PreparedStatement stm = conn.prepareStatement(
+                     "INSERT INTO product (name, price, description) VALUES (?, ?, ?)",
+                     Statement.RETURN_GENERATED_KEYS)) {
             // Установка параметров
             stm.setString(1, newProduct.getName());
-            stm.setDouble(2, newProduct.getPrice());
+            stm.setInt(2, newProduct.getPrice());
             stm.setString(3, newProduct.getDescription());
-
             // Выполнение запроса
             stm.executeUpdate();
+
+            ResultSet rs = stm.getGeneratedKeys();
+            if (rs.next()) {
+                newProduct.setId(rs.getLong(1));
+            }
+            return newProduct;
         } catch (SQLException ex) {
             throw new RepositoryException(ERROR_MESSAGE_DATA_BASE, ex);
         }
-        return newProduct;
     }
 
     /**

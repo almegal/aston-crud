@@ -2,7 +2,8 @@ package service;
 
 import db.UtilDB;
 import db.UtilDBimpl;
-import dto.ProductDTO;
+import dto.product.ProductDto;
+import entity.Product;
 import exception.ElementNotFoundException;
 import exception.RepositoryException;
 import exception.ServiceException;
@@ -67,13 +68,13 @@ public class ProductServiceImplUnitTest {
                 .thenReturn(Optional.of(MOCK_PRODUCT));
 
         // Вызов метода и получение актуального результата
-        ProductDTO actual = service.getById(1L);
+        ProductDto actual = service.getById(1L);
 
         // Проверка поведения метода и возвращаемого результата
         verify(repositoryImp, times(1)).getById(1L);
 
         // Проверка, что актуальные значения соответствуют ожидаемым
-        assertEquals(PRODUCT_DTO_TO_SAVE, actual);
+        assertEquals(PRODUCT_DTO_RESPONSE, actual);
     }
 
     /**
@@ -120,14 +121,14 @@ public class ProductServiceImplUnitTest {
     @DisplayName("Сохранение продукта, проверка сохраненных данных")
     public void shouldReturnSavedProduct() throws RepositoryException {
         // Мокирование репозитория для возврата сохраненного продукта
-        when(repositoryImp.save(MOCK_PRODUCT))
+        when(repositoryImp.save(any(Product.class)))
                 .thenReturn(MOCK_PRODUCT);
 
         // Вызов метода и получение актуального результата
-        ProductDTO actualProduct = service.save(PRODUCT_DTO_TO_SAVE);
+        ProductDto actualProduct = service.save(PRODUCT_DTO_CREATE);
 
         // Проверка, что сохраненный продукт соответствует ожидаемому результату
-        assertEquals(PRODUCT_DTO_TO_SAVE, actualProduct);
+        assertEquals(PRODUCT_DTO_RESPONSE, actualProduct);
     }
 
     /**
@@ -138,12 +139,12 @@ public class ProductServiceImplUnitTest {
     @DisplayName("Сохранение продукта, когда возникает ошибка базы данных")
     public void shouldThrowExceptionOnDatabaseErrorWhenSaving() throws RepositoryException {
         // Мокирование репозитория для выброса исключения при вызове save
-        when(repositoryImp.save(MOCK_PRODUCT))
+        when(repositoryImp.save(any(Product.class)))
                 .thenThrow(new RepositoryException(ERROR_MESSAGE_DATA_BASE));
 
         // Ожидание выброса исключения и проверка его сообщения
         ServiceException thrown = assertThrows(ServiceException.class,
-                () -> service.save(PRODUCT_DTO_TO_SAVE));
+                () -> service.save(PRODUCT_DTO_CREATE));
         assertEquals(ERROR_MESSAGE_DATA_BASE, thrown.getMessage());
     }
 
@@ -165,10 +166,10 @@ public class ProductServiceImplUnitTest {
                 .thenReturn(MOCK_PRODUCT);
 
         // Вызов метода и получение актуального результата
-        ProductDTO actual = service.updateByEntity(PRODUCT_DTO_TO_SAVE);
+        ProductDto actual = service.updateByEntity(PRODUCT_DTO_RESPONSE);
 
         // Проверка, что обновленный продукт соответствует ожидаемому результату
-        assertEquals(PRODUCT_DTO_TO_SAVE, actual);
+        assertEquals(PRODUCT_DTO_RESPONSE, actual);
     }
 
     /**
@@ -186,7 +187,7 @@ public class ProductServiceImplUnitTest {
 
         // Ожидание выброса исключения и проверка его сообщения
         ElementNotFoundException thrown = assertThrows(ElementNotFoundException.class,
-                () -> service.updateByEntity(PRODUCT_DTO_TO_SAVE));
+                () -> service.updateByEntity(PRODUCT_DTO_RESPONSE));
         String expected = ERROR_MESSAGE_NOT_FOUND.formatted(id);
         assertEquals(expected, thrown.getMessage());
     }
@@ -210,7 +211,7 @@ public class ProductServiceImplUnitTest {
 
         // Ожидание выброса исключения и проверка его сообщения
         ServiceException thrown = assertThrows(ServiceException.class,
-                () -> service.updateByEntity(PRODUCT_DTO_TO_SAVE));
+                () -> service.updateByEntity(PRODUCT_DTO_RESPONSE));
         assertEquals(ERROR_MESSAGE_DATA_BASE, thrown.getMessage());
     }
 
@@ -231,10 +232,10 @@ public class ProductServiceImplUnitTest {
         doNothing().when(repositoryImp).deleteById(id);
 
         // Вызов метода и получение актуального результата
-        ProductDTO actual = service.deleteById(id);
+        ProductDto actual = service.deleteById(id);
 
         // Проверка, что удаленный продукт соответствует ожидаемому результату
-        assertEquals(PRODUCT_DTO_TO_SAVE, actual);
+        assertEquals(PRODUCT_DTO_RESPONSE, actual);
     }
 
     /**

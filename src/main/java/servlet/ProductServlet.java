@@ -2,7 +2,8 @@ package servlet;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import dto.ProductDTO;
+import dto.product.ProductCreateDto;
+import dto.product.ProductDto;
 import exception.HttpMediaTypeException;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
@@ -55,7 +56,7 @@ public class ProductServlet extends HttpServlet {
 
             Long id = Long.parseLong(path);
 
-            ProductDTO productDTO = service.getById(id);
+            ProductDto productDTO = service.getById(id);
 
             sendJsonResponse(response, productDTO);
         } catch (Exception e) {
@@ -77,10 +78,10 @@ public class ProductServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
             return;
         }
-        ProductDTO productDTO = convertJsonToProductDTO(request);
         try {
-            service.save(productDTO);
-            sendJsonResponse(response, productDTO);
+            ProductCreateDto productCreateDto = convertJsonToProductDTO(request, ProductCreateDto.class);
+            ProductDto productDto = service.save(productCreateDto);
+            sendJsonResponse(response, productDto);
         } catch (Exception e) {
             throw new ServletException(e);
         }
@@ -100,8 +101,8 @@ public class ProductServlet extends HttpServlet {
             HttpMediaTypeException e = new HttpMediaTypeException(errorMessage);
             throw new ServletException(e);
         }
-        ProductDTO productDTO = convertJsonToProductDTO(request);
         try {
+            ProductDto productDTO = convertJsonToProductDTO(request, ProductDto.class);
             productDTO = service.updateByEntity(productDTO);
             sendJsonResponse(response, productDTO);
         } catch (Exception e) {
@@ -118,7 +119,7 @@ public class ProductServlet extends HttpServlet {
      */
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-        ProductDTO productDTO;
+        ProductDto productDTO;
         try {
             String path = splitPathInfo(request);
 
@@ -139,7 +140,7 @@ public class ProductServlet extends HttpServlet {
      * @param productDTO объект ProductDTO для отправки
      * @throws IOException если происходит ошибка ввода-вывода
      */
-    private void sendJsonResponse(HttpServletResponse response, ProductDTO productDTO) throws IOException {
+    private void sendJsonResponse(HttpServletResponse response, ProductDto productDTO) throws IOException {
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json");
         PrintWriter writer = response.getWriter();

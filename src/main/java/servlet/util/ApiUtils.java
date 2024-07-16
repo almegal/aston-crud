@@ -2,7 +2,6 @@ package servlet.util;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-import dto.ProductDTO;
 import exception.HttpBadRequestException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +22,7 @@ public class ApiUtils {
      * @return объект ProductDTO, созданный из JSON-данных
      * @throws ServletException если происходит ошибка при чтении или парсинге JSON-данных
      */
-    public static ProductDTO convertJsonToProductDTO(HttpServletRequest request) throws ServletException {
+    public static <T> T convertJsonToProductDTO(HttpServletRequest request, Class<T> typeClass) throws ServletException {
         try {
             Scanner scanner = new Scanner(request.getInputStream(), StandardCharsets.UTF_8);
             String jsonData = scanner.useDelimiter("\\A").next();
@@ -31,7 +30,7 @@ public class ApiUtils {
             return new GsonBuilder()
                     .serializeNulls()
                     .create()
-                    .fromJson(jsonData, ProductDTO.class);
+                    .fromJson(jsonData, typeClass);
         } catch (JsonSyntaxException | IOException e) {
             throw new ServletException(e);
         }
