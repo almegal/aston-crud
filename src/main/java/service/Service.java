@@ -4,9 +4,10 @@ import exception.ElementNotFoundException;
 import exception.ServiceException;
 
 /**
- * Интерфейс ProductService определяет основные методы для работы с продуктами.
+ * Интерфейс Service определяет основные методы для работы с сущностями.
  *
  * @param <T> тип сущности
+ * @param <C> тип DTO для создания сущности
  */
 public interface Service<T, C> {
 
@@ -18,16 +19,16 @@ public interface Service<T, C> {
      * @throws ElementNotFoundException если сущность не найдена
      * @throws ServiceException         если произошла ошибка в сервисе
      */
-    T getById(Long id);
+    T getById(Long id) throws ElementNotFoundException, ServiceException;
 
     /**
      * Сохраняет новую сущность.
      *
-     * @param entity сущность для сохранения
+     * @param dto объект DTO для создания новой сущности
      * @return сохраненная сущность
      * @throws ServiceException если произошла ошибка в сервисе
      */
-    T save(C dto);
+    T save(C dto) throws ServiceException;
 
     /**
      * Обновляет существующую сущность.
@@ -37,7 +38,7 @@ public interface Service<T, C> {
      * @throws ElementNotFoundException если сущность не найдена
      * @throws ServiceException         если произошла ошибка в сервисе
      */
-    T updateByEntity(T newEntity);
+    T updateByEntity(T newEntity) throws ElementNotFoundException, ServiceException;
 
     /**
      * Удаляет сущность по её идентификатору.
@@ -47,5 +48,5 @@ public interface Service<T, C> {
      * @throws ElementNotFoundException если сущность не найдена
      * @throws ServiceException         если произошла ошибка в сервисе
      */
-    T deleteById(Long id);
+    T deleteById(Long id) throws ElementNotFoundException, ServiceException;
 }
