@@ -2,8 +2,11 @@ package repository.impl;
 
 import config.ConfigUtil;
 import db.UtilDB;
+import dto.product.ProductCreateDto;
+import dto.product.ProductDto;
 import entity.Product;
 import exception.RepositoryException;
+import mapper.Mapper;
 import mapper.impl.ProductMapperImpl;
 import repository.CrudRepository;
 
@@ -16,7 +19,7 @@ import java.util.Optional;
  */
 public class ProductRepositoryImp implements CrudRepository<Product> {
 
-    final private ProductMapperImpl mapper = new ProductMapperImpl();
+    final private Mapper<ProductDto, ProductCreateDto, Product> mapper = new ProductMapperImpl();
     final private UtilDB db;
     final private String ERROR_MESSAGE_DATA_BASE = ConfigUtil.getProperty("ERROR_MESSAGE_DATA_BASE");
 
@@ -42,8 +45,11 @@ public class ProductRepositoryImp implements CrudRepository<Product> {
              PreparedStatement stm = conn.prepareStatement("SELECT * from product where id=?")) {
             stm.setLong(1, id);
             ResultSet resultSet = stm.executeQuery();
-            Product product = mapper.fromResultSetToEntity(resultSet);
-            return Optional.ofNullable(product);
+            if (resultSet.next()) {
+                Product product = mapper.fromResultSetToEntity(resultSet);
+                return Optional.ofNullable(product);
+            }
+            return Optional.empty();
         } catch (SQLException ex) {
             throw new RepositoryException(ERROR_MESSAGE_DATA_BASE, ex);
         }

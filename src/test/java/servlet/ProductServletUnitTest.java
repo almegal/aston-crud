@@ -3,6 +3,7 @@ package servlet;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import dto.product.ProductCreateDto;
+import dto.product.ProductDto;
 import exception.ElementNotFoundException;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletException;

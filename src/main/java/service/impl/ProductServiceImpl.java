@@ -9,16 +9,17 @@ import exception.RepositoryException;
 import exception.ServiceException;
 import mapper.Mapper;
 import mapper.impl.ProductMapperImpl;
+import repository.CrudRepository;
 import repository.impl.ProductRepositoryImp;
-import service.ProductService;
+import service.Service;
 
 import java.util.Optional;
 
 /**
  * Реализация интерфейса ProductService для работы с продуктами.
  */
-public class ProductServiceImpl implements ProductService<ProductDto, ProductCreateDto> {
-    private final ProductRepositoryImp repositoryImp;
+public class ProductServiceImpl implements Service<ProductDto, ProductCreateDto> {
+    private final CrudRepository<Product> repositoryImp;
     private final Mapper<ProductDto, ProductCreateDto, Product> mapper = new ProductMapperImpl();
     private final String ERROR_MESSAGE_NOT_FOUND = ConfigUtil.getProperty("ERROR_MESSAGE_NOT_FOUND");
 
