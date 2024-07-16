@@ -1,6 +1,7 @@
 package mapper.impl;
 
-import dto.ProductDTO;
+import dto.product.ProductCreateDto;
+import dto.product.ProductDto;
 import entity.Product;
 import mapper.Mapper;
 
@@ -11,55 +12,10 @@ import java.sql.SQLException;
  * Класс ProductMapperImpl реализует интерфейс Mapper и предназначен для преобразования объектов
  * между сущностью Product и DTO ProductDTO, а также для маппинга данных из ResultSet.
  */
-public class ProductMapperImpl implements Mapper<ProductDTO, Product> {
+public class ProductMapperImpl implements Mapper<ProductDto, ProductCreateDto, Product> {
 
-    /**
-     * Преобразует сущность Product в DTO ProductDTO.
-     *
-     * @param entity сущность Product
-     * @return DTO ProductDTO
-     */
     @Override
-    public ProductDTO toDTO(Product entity) {
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setId(entity.getId());
-        productDTO.setName(entity.getName());
-        productDTO.setPrice(entity.getPrice());
-        productDTO.setDescription(entity.getDescription());
-        return productDTO;
-    }
-
-    /**
-     * Преобразует данные из ResultSet в DTO ProductDTO.
-     *
-     * @param resultSet объект ResultSet с данными
-     * @return DTO ProductDTO или null, если данных нет
-     */
-    @Override
-    public ProductDTO toDto(ResultSet resultSet) {
-        ProductDTO productDTO = new ProductDTO();
-        try {
-            if (resultSet.next()) {
-                productDTO.setName(resultSet.getString("name"));
-                productDTO.setId(resultSet.getInt("id"));
-                productDTO.setPrice(resultSet.getInt("price"));
-            } else {
-                return null;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();  // Для логирования и отладки
-        }
-        return productDTO;
-    }
-
-    /**
-     * Преобразует DTO ProductDTO в сущность Product.
-     *
-     * @param dto DTO ProductDTO
-     * @return сущность Product
-     */
-    @Override
-    public Product toEntity(ProductDTO dto) {
+    public Product fromResponseDtoToEntity(ProductDto dto) {
         Product entity = new Product();
         entity.setName(dto.getName());
         entity.setId(dto.getId());
@@ -68,27 +24,41 @@ public class ProductMapperImpl implements Mapper<ProductDTO, Product> {
         return entity;
     }
 
-    /**
-     * Преобразует данные из ResultSet в сущность Product.
-     *
-     * @param resultSet объект ResultSet с данными
-     * @return сущность Product или null, если данных нет
-     */
     @Override
-    public Product toEntity(ResultSet resultSet) {
-        Product entity = new Product();
+    public Product fromResultSetToEntity(ResultSet resultSet) {
         try {
+            Product product = new Product();
             if (resultSet.next()) {
-                entity.setName(resultSet.getString("name"));
-                entity.setId(resultSet.getInt("id"));
-                entity.setPrice(resultSet.getInt("price"));
-                entity.setDescription(resultSet.getString("description"));
+                product.setName(resultSet.getString("name"));
+                product.setId(resultSet.getInt("id"));
+                product.setPrice(resultSet.getInt("price"));
+                product.setDescription(resultSet.getString("description"));
+                return product;
             } else {
                 return null;
             }
+
         } catch (SQLException e) {
-            e.printStackTrace();  // Для логирования и отладки
+            throw new RuntimeException(""); // Для логирования и отладки
         }
-        return entity;
+    }
+
+    @Override
+    public Product fromCreateDtoToEntity(ProductCreateDto dto) {
+        Product product = new Product();
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+        product.setPrice(dto.getPrice());
+        return product;
+    }
+
+    @Override
+    public ProductDto fromEntityToResponseDto(Product entity) {
+        ProductDto productDTO = new ProductDto();
+        productDTO.setId(entity.getId());
+        productDTO.setName(entity.getName());
+        productDTO.setPrice(entity.getPrice());
+        productDTO.setDescription(entity.getDescription());
+        return productDTO;
     }
 }

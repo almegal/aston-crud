@@ -2,12 +2,12 @@ package mapper;
 
 import java.sql.ResultSet;
 
-public interface Mapper<T, D> {
-    T toDTO(D dto);
+public interface Mapper<T, C, E> {
+    E fromResponseDtoToEntity(T dto);
 
-    T toDto(ResultSet resultSet);
+    E fromResultSetToEntity(ResultSet resultSet);
 
-    D toEntity(T entity);
+    E fromCreateDtoToEntity(C dto);
 
-    D toEntity(ResultSet resultSet);
+    T fromEntityToResponseDto(E entity);
 }
