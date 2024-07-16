@@ -41,14 +41,19 @@ public class ProductRepositoryImp implements CrudRepository<Product> {
      */
     @Override
     public Optional<Product> getById(Long id) throws RepositoryException {
+        // Устанавливаем соединение и создаем подготовленный запрос
         try (Connection conn = db.createConnection();
              PreparedStatement stm = conn.prepareStatement("SELECT * from product where id=?")) {
+            // Устанавливаем значение идентификатора в запрос
             stm.setLong(1, id);
+            // Выполняем запрос и получаем результат
             ResultSet resultSet = stm.executeQuery();
+            // Если результат найден, маппим его в объект Product
             if (resultSet.next()) {
                 Product product = mapper.fromResultSetToEntity(resultSet);
                 return Optional.ofNullable(product);
             }
+            // Если результат не найден, возвращаем пустой Optional
             return Optional.empty();
         } catch (SQLException ex) {
             throw new RepositoryException(ERROR_MESSAGE_DATA_BASE, ex);
@@ -64,17 +69,18 @@ public class ProductRepositoryImp implements CrudRepository<Product> {
      */
     @Override
     public Product save(Product newProduct) throws RepositoryException {
+        // Устанавливаем соединение и создаем подготовленный запрос
         try (Connection conn = db.createConnection();
              PreparedStatement stm = conn.prepareStatement(
                      "INSERT INTO product (name, price, description) VALUES (?, ?, ?)",
                      Statement.RETURN_GENERATED_KEYS)) {
-            // Установка параметров
+            // Устанавливаем параметры запроса
             stm.setString(1, newProduct.getName());
             stm.setInt(2, newProduct.getPrice());
             stm.setString(3, newProduct.getDescription());
-            // Выполнение запроса
+            // Выполняем запрос на вставку
             stm.executeUpdate();
-
+            // Получаем сгенерированный ключ (идентификатор)
             ResultSet rs = stm.getGeneratedKeys();
             if (rs.next()) {
                 newProduct.setId(rs.getLong(1));
@@ -94,15 +100,15 @@ public class ProductRepositoryImp implements CrudRepository<Product> {
      */
     @Override
     public Product updateByEntity(Product updateProduct) throws RepositoryException {
+        // Устанавливаем соединение и создаем подготовленный запрос
         try (Connection conn = db.createConnection();
              PreparedStatement stm = conn.prepareStatement("UPDATE product SET name = ?, price = ?, description = ? WHERE id = ?")) {
-            // Установка параметров
+            // Устанавливаем параметры запроса
             stm.setString(1, updateProduct.getName());
             stm.setDouble(2, updateProduct.getPrice());
             stm.setString(3, updateProduct.getDescription());
             stm.setLong(4, updateProduct.getId());
-
-            // Выполнение запроса
+            // Выполняем запрос на обновление
             stm.executeUpdate();
             return updateProduct;
         } catch (SQLException ex) {
@@ -118,12 +124,12 @@ public class ProductRepositoryImp implements CrudRepository<Product> {
      */
     @Override
     public void deleteById(Long id) throws RepositoryException {
+        // Устанавливаем соединение и создаем подготовленный запрос
         try (Connection conn = db.createConnection();
              PreparedStatement stm = conn.prepareStatement("DELETE FROM product WHERE id = ?")) {
-            // Установка параметра
+            // Устанавливаем значение идентификатора в запрос
             stm.setLong(1, id);
-
-            // Выполнение запроса
+            // Выполняем запрос на удаление
             stm.executeUpdate();
         } catch (SQLException ex) {
             throw new RepositoryException(ERROR_MESSAGE_DATA_BASE, ex);

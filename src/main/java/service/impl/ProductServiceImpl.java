@@ -16,7 +16,7 @@ import service.Service;
 import java.util.Optional;
 
 /**
- * Реализация интерфейса ProductService для работы с продуктами.
+ * Реализация интерфейса Service для работы с продуктами.
  */
 public class ProductServiceImpl implements Service<ProductDto, ProductCreateDto> {
     private final CrudRepository<Product> repositoryImp;
@@ -33,7 +33,7 @@ public class ProductServiceImpl implements Service<ProductDto, ProductCreateDto>
     }
 
     /**
-     * Возвращает ProductDTO по заданному идентификатору.
+     * Возвращает ProductDto по заданному идентификатору продукта.
      *
      * @param id идентификатор продукта
      * @return DTO продукта
@@ -41,15 +41,13 @@ public class ProductServiceImpl implements Service<ProductDto, ProductCreateDto>
      * @throws ServiceException         если произошла ошибка на уровне сервиса
      */
     @Override
-    public ProductDto getById(Long id) {
+    public ProductDto getById(Long id) throws ElementNotFoundException, ServiceException {
         try {
             Optional<Product> productOptional = repositoryImp.getById(id);
-            // выкидывает исключение если Optional пустой
             Product product = productOptional.orElseThrow(() -> {
                 String msg = ERROR_MESSAGE_NOT_FOUND.formatted(id);
                 return new ElementNotFoundException(msg);
             });
-            // возращает дто
             return mapper.fromEntityToResponseDto(product);
         } catch (RepositoryException ex) {
             throw new ServiceException(ex.getMessage(), ex);
@@ -64,11 +62,10 @@ public class ProductServiceImpl implements Service<ProductDto, ProductCreateDto>
      * @throws ServiceException если произошла ошибка на уровне сервиса
      */
     @Override
-    public ProductDto save(ProductCreateDto dto) {
+    public ProductDto save(ProductCreateDto dto) throws ServiceException {
         try {
             Product product = mapper.fromCreateDtoToEntity(dto);
             Product result = repositoryImp.save(product);
-            // возращает дто
             return mapper.fromEntityToResponseDto(result);
         } catch (RepositoryException ex) {
             throw new ServiceException(ex.getMessage(), ex);
@@ -84,12 +81,11 @@ public class ProductServiceImpl implements Service<ProductDto, ProductCreateDto>
      * @throws ServiceException         если произошла ошибка на уровне сервиса
      */
     @Override
-    public ProductDto updateByEntity(ProductDto newEntity) {
+    public ProductDto updateByEntity(ProductDto newEntity) throws ElementNotFoundException, ServiceException {
         try {
             Product newProduct = mapper.fromResponseDtoToEntity(newEntity);
-            getById(newEntity.getId());
+            getById(newEntity.getId()); // Проверяем, существует ли продукт с данным id
             Product updatedProduct = repositoryImp.updateByEntity(newProduct);
-            // возращает дто
             return mapper.fromEntityToResponseDto(updatedProduct);
         } catch (RepositoryException ex) {
             throw new ServiceException(ex.getMessage(), ex);
@@ -105,11 +101,10 @@ public class ProductServiceImpl implements Service<ProductDto, ProductCreateDto>
      * @throws ServiceException         если произошла ошибка на уровне сервиса
      */
     @Override
-    public ProductDto deleteById(Long id) {
+    public ProductDto deleteById(Long id) throws ElementNotFoundException, ServiceException {
         try {
-            ProductDto productDTO = getById(id);
-            repositoryImp.deleteById(id);
-            // возращает дто 
+            ProductDto productDTO = getById(id); // Получаем продукт для возврата его DTO
+            repositoryImp.deleteById(id); // Удаляем продукт из репозитория
             return productDTO;
         } catch (RepositoryException ex) {
             throw new ServiceException(ex.getMessage(), ex);

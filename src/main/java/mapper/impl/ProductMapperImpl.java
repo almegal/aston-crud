@@ -14,6 +14,12 @@ import java.sql.SQLException;
  */
 public class ProductMapperImpl implements Mapper<ProductDto, ProductCreateDto, Product> {
 
+    /**
+     * Преобразует объект ProductDto (Response DTO) в объект Product (сущность).
+     *
+     * @param dto объект ProductDto
+     * @return объект Product
+     */
     @Override
     public Product fromResponseDtoToEntity(ProductDto dto) {
         Product entity = new Product();
@@ -24,6 +30,13 @@ public class ProductMapperImpl implements Mapper<ProductDto, ProductCreateDto, P
         return entity;
     }
 
+    /**
+     * Преобразует данные из ResultSet в объект Product (сущность).
+     *
+     * @param resultSet объект ResultSet, полученный из базы данных
+     * @return объект Product
+     * @throws RuntimeException если возникает SQLException при извлечении данных из ResultSet
+     */
     @Override
     public Product fromResultSetToEntity(ResultSet resultSet) {
         try {
@@ -38,6 +51,12 @@ public class ProductMapperImpl implements Mapper<ProductDto, ProductCreateDto, P
         }
     }
 
+    /**
+     * Преобразует объект ProductCreateDto (Create DTO) в объект Product (сущность).
+     *
+     * @param dto объект ProductCreateDto
+     * @return объект Product
+     */
     @Override
     public Product fromCreateDtoToEntity(ProductCreateDto dto) {
         Product product = new Product();
@@ -47,6 +66,12 @@ public class ProductMapperImpl implements Mapper<ProductDto, ProductCreateDto, P
         return product;
     }
 
+    /**
+     * Преобразует объект Product (сущность) в объект ProductDto (Response DTO).
+     *
+     * @param entity объект Product
+     * @return объект ProductDto
+     */
     @Override
     public ProductDto fromEntityToResponseDto(Product entity) {
         ProductDto productDTO = new ProductDto();
