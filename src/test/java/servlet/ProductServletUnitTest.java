@@ -2,6 +2,7 @@ package servlet;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import dto.product.ProductCreateDto;
 import exception.ElementNotFoundException;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletException;
@@ -101,7 +102,7 @@ public class ProductServletUnitTest {
     @DisplayName("Запрос на получение существующего продукта")
     public void doGetWhenProductExist() throws ServletException, IOException {
         // Настройка поведения мока: вернуть продукт при запросе по ID
-        when(service.getById(anyLong())).thenReturn(PRODUCT_DTO_TO_SAVE);
+        when(service.getById(anyLong())).thenReturn(PRODUCT_DTO_RESPONSE);
         // Настройка мока HttpServletResponse для возврата PrintWriter
         when(mockHttpResponse.getWriter()).thenReturn(PRINT_WRITER);
         // Настройка мока HttpServletRequest для возврата пути запроса
@@ -111,7 +112,7 @@ public class ProductServletUnitTest {
         servlet.doGet(mockHttpRequest, mockHttpResponse);
 
         // Получение ожидаемого результата в формате JSON
-        String expected = new Gson().toJson(PRODUCT_DTO_TO_SAVE);
+        String expected = new Gson().toJson(PRODUCT_DTO_RESPONSE);
         // Проверка результатов
         verifyResponse(expected);
     }
@@ -176,10 +177,11 @@ public class ProductServletUnitTest {
         setupMockRequestInputStream(PRODUCT_AS_STRING);
         // Настройка моков HttpServletResponse
         when(mockHttpResponse.getWriter()).thenReturn(PRINT_WRITER);
+        when(service.save(any(ProductCreateDto.class))).thenReturn(PRODUCT_DTO_RESPONSE);
         // Вызов тестируемого метода
         servlet.doPost(mockHttpRequest, mockHttpResponse);
         // Получение ожидаемого результата в формате JSON
-        String expected = new Gson().toJson(PRODUCT_DTO_TO_SAVE);
+        String expected = new Gson().toJson(PRODUCT_DTO_RESPONSE);
         // Проверка результатов
         verifyResponse(expected);
     }
@@ -199,7 +201,7 @@ public class ProductServletUnitTest {
                 () -> servlet.doPost(mockHttpRequest, mockHttpResponse));
 
         // Проверка типа исключения
-        assertTrue(thrown.getCause() instanceof JsonSyntaxException);
+        assertTrue(thrown.getCause().getCause() instanceof JsonSyntaxException);
     }
 
     /**
@@ -214,13 +216,13 @@ public class ProductServletUnitTest {
         setupMockRequestInputStream(PRODUCT_AS_STRING);
 
         // Настройка поведения мока: вернуть обновленный продукт при запросе по ID
-        when(service.updateByEntity(PRODUCT_DTO_TO_SAVE)).thenReturn(PRODUCT_DTO_TO_SAVE);
+        when(service.updateByEntity(PRODUCT_DTO_RESPONSE)).thenReturn(PRODUCT_DTO_RESPONSE);
 
         // Вызов тестируемого метода
         servlet.doPut(mockHttpRequest, mockHttpResponse);
 
         // Получение ожидаемого результата в формате JSON
-        String expected = new Gson().toJson(PRODUCT_DTO_TO_SAVE);
+        String expected = new Gson().toJson(PRODUCT_DTO_RESPONSE);
         // Проверка результатов
         verifyResponse(expected);
     }
@@ -233,7 +235,7 @@ public class ProductServletUnitTest {
     @DisplayName("Запрос на обновление, если продукта не существует")
     public void doPutWhenProductIsNotExist() throws IOException {
         // Настройка поведения мока: выбросить исключение при запросе продукта по ID
-        when(service.updateByEntity(PRODUCT_DTO_TO_SAVE))
+        when(service.updateByEntity(PRODUCT_DTO_RESPONSE))
                 .thenThrow(new ElementNotFoundException(ERROR_MESSAGE_NOT_FOUND.formatted(MOCK_PRODUCT.getId())));
 
         // Настройка моков HttpServletRequest
@@ -265,13 +267,13 @@ public class ProductServletUnitTest {
         // Настройка моков
         setupMockRequestPath("/1");
         when(mockHttpResponse.getWriter()).thenReturn(PRINT_WRITER);
-        when(service.deleteById(1L)).thenReturn(PRODUCT_DTO_TO_SAVE);
+        when(service.deleteById(1L)).thenReturn(PRODUCT_DTO_RESPONSE);
 
         // Вызов тестируемого метода
         servlet.doDelete(mockHttpRequest, mockHttpResponse);
 
         // Получение ожидаемого результата в формате JSON
-        String expected = new Gson().toJson(PRODUCT_DTO_TO_SAVE);
+        String expected = new Gson().toJson(PRODUCT_DTO_RESPONSE);
         // Проверка результатов
         verifyResponse(expected);
     }
