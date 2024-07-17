@@ -11,7 +11,7 @@ import mapper.Mapper;
 import mapper.impl.RecipeMapperImpl;
 import repository.RecipeRepositorySave;
 import repository.impl.RecipeRepositoryImp;
-import service.Service;
+import service.RecipeService;
 
 import java.sql.SQLException;
 import java.util.Optional;
@@ -19,7 +19,7 @@ import java.util.Optional;
 /**
  * Реализация интерфейса Service для работы с рецептами.
  */
-public class RecipeServiceImpl implements Service<RecipeDto, RecipeCreateDto> {
+public class RecipeServiceImpl implements RecipeService {
     private final RecipeRepositorySave<Recipe> repository;
     private final String ERROR_MESSAGE_NOT_FOUND = ConfigUtil.getProperty("ERROR_MESSAGE_NOT_FOUND");
     private final Mapper<RecipeDto, RecipeCreateDto, Recipe> mapper = new RecipeMapperImpl();
