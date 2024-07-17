@@ -17,24 +17,6 @@ import java.util.Scanner;
  * Вспомогательный класс для работы с API, предоставляющий методы для обработки HTTP-запросов.
  */
 public class ApiUtils {
-    public static final Gson gson = new GsonBuilder().serializeNulls().create();
-
-    /**
-     *
-     */
-    public static <T> T convertJsonToDTO(HttpServletRequest request, Class<T> typeClass) throws ServletException {
-        try {
-            //
-            Scanner scanner = new Scanner(request.getInputStream(), StandardCharsets.UTF_8);
-            //
-            String jsonData = scanner.useDelimiter("\\A").next();
-            scanner.close();
-            //
-            return gson.fromJson(jsonData, typeClass);
-        } catch (JsonSyntaxException | IOException e) {
-            throw new ServletException(e);
-        }
-    }
 
     /**
      *
@@ -61,19 +43,5 @@ public class ApiUtils {
             return true;
         }
         return !req.getContentType().equals(JSON_CONTENT_TYPE);
-    }
-
-    /**
-     *
-     */
-    public static <T> void sendJsonResponse(HttpServletResponse response, T dto) throws IOException {
-        //
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.setContentType("application/json");
-        //
-        PrintWriter writer = response.getWriter();
-        writer.print(gson.toJson(dto));
-        //
-        writer.flush();
     }
 }
