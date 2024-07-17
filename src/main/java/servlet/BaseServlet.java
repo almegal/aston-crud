@@ -84,8 +84,8 @@ public abstract class BaseServlet<T, C> extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         if (!isCorrectContentTypeForPost(request)) { // Проверка, поддерживается ли тип содержимого запроса
-            response.sendError(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
-            return;
+            String errorMessage = String.format("Content type: %s not supported for PUT method", request.getContentType());
+            throw new ServletException(new HttpMediaTypeException(errorMessage));
         }
         try {
             C dtoCreate = convertJsonToDTO(request, getTypeC()); // Преобразование JSON-запроса в DTO
