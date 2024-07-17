@@ -78,11 +78,11 @@ public class RecipeRepositoryImp implements RecipeRepositorySave<Recipe> {
     /**
      * Сохраняет новый рецепт в базе данных вместе с его продуктами.
      *
-     * @param newRecipe объект Recipe для сохранения
+     * @param newRecipe  объект Recipe для сохранения
      * @param productsId множество идентификаторов продуктов, связанных с рецептом
      * @return сохраненный объект Recipe
      * @throws RepositoryException если происходит ошибка при работе с базой данных
-     * @throws SQLException если происходит ошибка при выполнении SQL запроса
+     * @throws SQLException        если происходит ошибка при выполнении SQL запроса
      */
     @Override
     public Recipe save(Recipe newRecipe, Set<Long> productsId) throws RepositoryException, SQLException {
@@ -101,12 +101,12 @@ public class RecipeRepositoryImp implements RecipeRepositorySave<Recipe> {
             // Коммитим транзакцию
             conn.commit();
             return newRecipe;
-        } catch (SQLException ex) {
+        } catch (IllegalArgumentException | SQLException ex) {
             // В случае ошибки откатываем транзакцию
             if (conn != null) {
                 conn.rollback();
             }
-            throw new RepositoryException(ERROR_MESSAGE_DATA_BASE, ex);
+            throw new RepositoryException(ERROR_MESSAGE_DATA_BASE + " " + ex.getMessage(), ex);
         } finally {
             // Включаем авто-коммит и закрываем соединение
             if (conn != null) {
@@ -163,7 +163,7 @@ public class RecipeRepositoryImp implements RecipeRepositorySave<Recipe> {
     /**
      * Сохраняет рецепт в базу данных.
      *
-     * @param conn соединение с базой данных
+     * @param conn   соединение с базой данных
      * @param recipe объект Recipe для сохранения
      * @throws SQLException если происходит ошибка при выполнении SQL запроса
      */
@@ -187,12 +187,15 @@ public class RecipeRepositoryImp implements RecipeRepositorySave<Recipe> {
     /**
      * Добавляет связь между рецептом и продуктами в таблицу many-to-many.
      *
-     * @param conn соединение с базой данных
-     * @param recipeID идентификатор рецепта
+     * @param conn       соединение с базой данных
+     * @param recipeID   идентификатор рецепта
      * @param productIds множество идентификаторов продуктов
-     * @throws SQLException если происходит ошибка при выполнении SQL запроса
+     * @throws RepositoryException если происходит ошибка при выполнении SQL запроса
      */
-    private void addRecipeProductsManyToMany(Connection conn, Long recipeID, Set<Long> productIds) throws SQLException {
+    private void addRecipeProductsManyToMany(Connection conn, Long recipeID, Set<Long> productIds) throws RepositoryException {
+        if (productIds == null || productIds.isEmpty()) {
+            throw new IllegalArgumentException("Product list cannot be empty or equals null");
+        }
         String query = "INSERT INTO recipe_product (recipe_id, product_id) VALUES (?,?)";
         // Создаем подготовленный запрос
         try (PreparedStatement stm = conn.prepareStatement(query)) {
@@ -204,6 +207,8 @@ public class RecipeRepositoryImp implements RecipeRepositorySave<Recipe> {
             }
             // Выполняем батч запросов
             stm.executeBatch();
+        } catch (IllegalArgumentException | SQLException ex) {
+            throw new RepositoryException(ex.getMessage());
         }
     }
 }

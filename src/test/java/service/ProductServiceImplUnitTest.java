@@ -10,6 +10,9 @@ import exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -17,6 +20,7 @@ import repository.impl.ProductRepositoryImp;
 import service.impl.ProductServiceImpl;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static config.MockProps.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -81,19 +85,20 @@ public class ProductServiceImplUnitTest {
      * Тестирует метод getById, чтобы убедиться, что он выбрасывает исключение
      * при отсутствии продукта с заданным ID в репозитории.
      */
-    @Test
+    @ParameterizedTest
+    @ValueSource(longs = {1,3,4,5,6,7,10,330,34,2431453, 5435})
     @DisplayName("Получение продукта по ID, когда продукт не существует")
-    public void shouldThrowExceptionIfIdNotExist() throws RepositoryException {
+    public void shouldThrowExceptionIfIdNotExist(Long id) throws RepositoryException {
         // Мокирование репозитория для возврата пустого Optional при вызове getById с ID 1
-        when(repositoryImp.getById(1L))
+        when(repositoryImp.getById(id))
                 .thenReturn(Optional.empty());
 
         // Подготовка ожидаемого результата
-        String expected = ERROR_MESSAGE_NOT_FOUND.formatted(1L);
+        String expected = ERROR_MESSAGE_NOT_FOUND.formatted(id);
 
         // Ожидание выброса исключения и проверка его сообщения
         ElementNotFoundException thrown = assertThrows(ElementNotFoundException.class,
-                () -> service.getById(1L));
+                () -> service.getById(id));
         assertEquals(expected, thrown.getMessage());
     }
 
@@ -130,6 +135,7 @@ public class ProductServiceImplUnitTest {
         // Проверка, что сохраненный продукт соответствует ожидаемому результату
         assertEquals(PRODUCT_DTO_RESPONSE, actualProduct);
     }
+
 
     /**
      * Тестирует метод save, чтобы убедиться, что он выбрасывает исключение

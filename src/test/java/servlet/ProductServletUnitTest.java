@@ -3,7 +3,6 @@ package servlet;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import dto.product.ProductCreateDto;
-import dto.product.ProductDto;
 import exception.ElementNotFoundException;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletException;
@@ -58,6 +57,7 @@ public class ProductServletUnitTest {
     public void init() {
         STRING_WRITER = new StringWriter();
         PRINT_WRITER = new PrintWriter(STRING_WRITER);
+        servlet.setService(service);
     }
 
     /**
